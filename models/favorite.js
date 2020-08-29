@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;  //using shorthand
-
 // Create a schema
+const Schema = mongoose.Schema;
+
 const favoriteSchema = new Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -11,6 +11,8 @@ const favoriteSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Campsite'
     }]
+  }, {
+    timestamps: true
 });
 
 // Create a model using the schema

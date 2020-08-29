@@ -56,11 +56,30 @@ favoriteRouter
 		res.end("PUT operation not supported on /favorites");
 	})
 	.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-		Favorite.deleteMany({ user: req.user._id })
-			.then((response) => {
-				res.statusCode = 200;
-				res.setHeader("Content-Type", "application/json");
-				res.json(response);
+		Favorite.findOne({ user: req.user._id })
+			.then((favorite) => {
+				if (favorite) {
+                    const index = favorite.campsites.indexOf(req.params.campsiteId);
+                    const deleted = favorite.campsites[index];
+                    if (index !== -1) {
+                        favorite.campsites.splice(index, 1);  //remove 1 item at given index
+                        favorite.save()
+                            .then(favorite => {
+                                res.statusCode = 200;
+                                res.setHeader('Content-Type', 'application/json');
+                                res.json(favorite);
+                            })
+                            .catch(err => next(err));
+                    } else {
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'text/plain');
+                        res.end('That campsite is not in the list of favorites!');
+                    }
+                } else {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'text/plain');
+                    res.end('There is no favorited campsite for this user!');
+                }
 			})
 			.catch((err) => next(err));
 	});
@@ -96,7 +115,7 @@ favoriteRouter
                                     res.end('That campsite is already in the list of favorites!');
                                 }
                             } else { //if the user does not have associated favorite doc, create one
-                                Favorite.create({ user: req.user._id, campsites: req.body })
+                                Favorite.create({ user: req.user._id, campsites: [req.params.campsiteId] })
                                     .then((favorite) => {
                                         res.statusCode = 200;
                                         res.setHeader("Content-Type", "application/json");
@@ -130,9 +149,13 @@ favoriteRouter
                         favorite.campsites.splice(index, 1);  //remove 1 item at given index
                         favorite.save()
                             .then(favorite => {
-                                res.statusCode = 200;
-                                res.setHeader('Content-Type', 'application/json');
-                                res.json(favorite);
+                                Favorite.findById(favorite._id)
+                                    .then(favorite => {
+                                        console.log('Favorite Campsite Deleted!', favorite);
+                                        res.statusCode = 200;
+                                        res.setHeader('Content-Type', 'application/json');
+                                        res.json(favorite);
+                                    })
                             })
                             .catch(err => next(err));
                     } else {
