@@ -56,33 +56,24 @@ favoriteRouter
 		res.end("PUT operation not supported on /favorites");
 	})
 	.delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-		Favorite.findOne({ user: req.user._id })
-			.then((favorite) => {
-				if (favorite) {
-                    const index = favorite.campsites.indexOf(req.params.campsiteId);
-                    const deleted = favorite.campsites[index];
-                    if (index !== -1) {
-                        favorite.campsites.splice(index, 1);  //remove 1 item at given index
-                        favorite.save()
-                            .then(favorite => {
-                                res.statusCode = 200;
-                                res.setHeader('Content-Type', 'application/json');
-                                res.json(favorite);
-                            })
-                            .catch(err => next(err));
-                    } else {
-                        res.statusCode = 200;
-                        res.setHeader('Content-Type', 'text/plain');
-                        res.end('That campsite is not in the list of favorites!');
-                    }
+        Favorite.findOne({ user: req.user._id })
+            .then(favorite => {
+                if (favorite) {
+                    favorite.remove()
+                        .then(favorite => {
+                            res.statusCode = 200;
+                            res.setHeader('Content-Type', 'application/json');
+                            res.json(favorite);
+                        })
+                        .catch(err => next(err));
                 } else {
                     res.statusCode = 200;
-                    res.setHeader('Content-Type', 'text/plain');
-                    res.end('There is no favorited campsite for this user!');
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json(favorite);
                 }
-			})
-			.catch((err) => next(err));
-	});
+            })
+            .catch(err => next(err));
+        });
 
 favoriteRouter
     .route('/:campsiteId')
